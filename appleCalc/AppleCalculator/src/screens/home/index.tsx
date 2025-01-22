@@ -22,11 +22,6 @@ interface GeneratedResult {
 }
 
 
-
-
-
-
-
 export default function Home() {
 
     const canvasRef = useRef<HTMLCanvasElement>(null); 
@@ -46,6 +41,17 @@ export default function Home() {
     //made another use state to store variable, like x=y, y=8 etc, it will be stored in the form of an object
     const [dictOfVars, setDictOfVars] = useState({});
 
+    //made another usestate to store latex mathjax rendering
+    const [latexExpression, setLatexExpression] = useState<Array<string>>([]);
+
+    //setting usestate for the position where we can render the POSITION of latex
+    const [latexPosition, setLatexPosition] = useState({x:10 , y:200});
+    // We assign initial values for x and y inside useState for latexPosition to set the starting position of where the LaTeX content will be rendered on the screen. These values serve as the default coordinates when the component is first rendered.
+    // Here’s why:
+    // Default Positioning: By initializing x: 10 and y: 200, you're defining where the LaTeX element should appear by default on the screen.
+
+
+
     //runs everytime reset Changes
     useEffect(() => {
         if(reset) {
@@ -53,6 +59,39 @@ export default function Home() {
             setReset(false);
         }
     }, [reset]);
+
+    useEffect(() => {
+        if (latexExpression.length>0 && window.MathJax){
+            setTimeout(() => {
+                window.MathJax.Hub.Queue([""])
+            })
+        }
+    },[latexExpression])
+
+    useEffect(() => {
+        if (result) { //we run an expression that will render our Latext To Canvas
+            renderLatexToCanvas(result.expression, result.answer)
+        }
+    }, [result]);
+
+    const renderLatexToCanvas = (expression: string, answer: string) => {
+        //takes our latex and converts it into a large expression
+        const latex = `\\(\\LARGE{${expression} = ${answer}}\\)`;
+
+        //we'll use our spread operator here to process any assigned operator like x=17 , y = 8, etc. and save it in our setLatexExpression to the new value we just created/
+        setLatexExpression([...latexExpression, latex]);
+
+        const canvas = canvasRef.current;
+        if(canvas) {
+            const ctx = canvas.getContext('2d');
+            if(ctx) {
+                ctx.clearRect(0,0, canvas.width, canvas.height);
+            }
+        }
+
+
+
+    };
 
     //friend data function to link canvas to the backend
     const sendData = async () => {
@@ -111,6 +150,23 @@ export default function Home() {
             }
 
         }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/config/TeX-MML-AM_CHTML.js';
+        script.async = true;
+        document.head.appendChild(script);
+
+        script.onload = () => {
+            window.MathJax.Hub.Config({
+                tex2jax: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+            });
+        };
+        
+
+        return () => {
+            document.head.removeChild(script);
+        }
+
     }, []) // empty dependancy array so it doesn't run when some state changes, but just runs when program starts
 
     //to know when user exactly wants to draw we can make a mouseClickEvent, which takes mousclick as an EVENT on the canvas element
