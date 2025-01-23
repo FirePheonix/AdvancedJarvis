@@ -3,6 +3,7 @@
     "@mantine/core": "^7.16.0",
     "@mantine/hooks": "^7.16.0",
     "mathjax": "^3.2.2",
+    "react-draggable": "^4.4.6",
     "react-router-dom": "^7.1.1"
   },
   "devDependencies": {

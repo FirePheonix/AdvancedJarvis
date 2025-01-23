@@ -6,7 +6,6 @@ import { SWATCHES } from 'C:/Users/HP/Desktop/MathCam/appleCalc/AppleCalculator/
 import { ColorSwatch, Group } from '@mantine/core';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
-import { ServerResponse } from 'http';
 
 //to keep typescript happy, we make an interface :)
 interface Response {
@@ -50,12 +49,35 @@ export default function Home() {
     // Here’s why:
     // Default Positioning: By initializing x: 10 and y: 200, you're defining where the LaTeX element should appear by default on the screen.
 
+    //for dragging
+    const [isDragging, setIsDragging] = useState(false);
+    const dragRef = useRef<HTMLDivElement | null>(null);
 
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        setIsDragging(true);
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging) return;
+
+        const newX = e.clientX;
+        const newY = e.clientY;
+
+        setLatexPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
 
     //runs everytime reset Changes
     useEffect(() => {
         if(reset) {
             resetCanvas();
+            setLatexExpression([]);
+            setResult(undefined);
+            setDictOfVars({});
             setReset(false);
         }
     }, [reset]);
@@ -63,8 +85,8 @@ export default function Home() {
     useEffect(() => {
         if (latexExpression.length>0 && window.MathJax){
             setTimeout(() => {
-                window.MathJax.Hub.Queue([""])
-            })
+                window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub])
+            }, 0);
         }
     },[latexExpression])
 
@@ -100,20 +122,56 @@ export default function Home() {
         if (canvas) {
             try {
                 // Convert the canvas to a Base64 image URL
-                const imageData = canvas.toDataURL('image/png');
+                //const imageData = canvas.toDataURL('image/png');
     
                 // Send a POST request using axios
                 const response = await axios.post(
                     `${import.meta.env.VITE_API_URL}/calculate`, // Backend URL stored in VITE_API_URL
                     {
-                        image: imageData,
+                        image: canvas.toDataURL('image/png'),
                         dict_of_vars: dictOfVars, // Replace `dictOfVars` with your actual variable
                     }
                 );
     
                 // Access response data
-                const resp = response.data;
+                const resp = await response.data;
+                resp.data.forEach((data: Response) => {
+                    setDictOfVars({
+                        ...dictOfVars,
+                        [data.expr]: data.results
+                        
+                    })
+                })
                 console.log('Response:', resp);
+
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx!.getImageData(0, 0, canvas.width, canvas.height);
+                let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+    
+                for (let y = 0; y < canvas.height; y++) {
+                    for (let x = 0; x < canvas.width; x++) {
+                        const i = (y * canvas.width + x) * 4;
+                        if (imageData.data[i + 3] > 0) {  // If pixel is not transparent
+                            minX = Math.min(minX, x);
+                            minY = Math.min(minY, y);
+                            maxX = Math.max(maxX, x);
+                            maxY = Math.max(maxY, y);
+                        }
+                    }
+                }
+    
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+    
+                setLatexPosition({ x: centerX, y: centerY });
+                resp.data.forEach((data: Response) => {
+                    setTimeout(() => {
+                        setResult({
+                            expression: data.expr,
+                            answer: data.results
+                        });
+                    }, 1000);
+                });
     
             } catch (error) {
                 console.error('Error sending data:', error);
@@ -152,7 +210,7 @@ export default function Home() {
         }
 
         const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/config/TeX-MML-AM_CHTML.js';
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.min.js';
         script.async = true;
         document.head.appendChild(script);
 
@@ -209,50 +267,63 @@ export default function Home() {
     
     return (
         <>
-            <div className='grid grid-cols-3 gap-2'>
-                <Button 
-                    onClick= {() => setReset(true)}
-                    className= 'z-20 bg-black text-white'
-                    variant='default'
-                    color='black'
+            <div className="grid grid-cols-3 gap-2">
+                <Button
+                    onClick={() => setReset(true)}
+                    className="z-20 bg-black text-white"
+                    variant="default"
+                    color="black"
                 >
                     Reset
                 </Button>
-                <Group className='z-20'>
+                <Group className="z-20">
                     {SWATCHES.map((swatchColor: string) => (
                         <ColorSwatch
                             key={swatchColor}
                             color={swatchColor}
-                            onClick= {() => setColor(swatchColor)}
-                        >
-                        </ColorSwatch>
+                            onClick={() => setColor(swatchColor)}
+                        ></ColorSwatch>
                     ))}
                 </Group>
-                <Button 
-                    onClick= {sendData}
-                    className= 'z-20 bg-black text-white'
-                    variant='default'
-                    color='black'
+                <Button
+                    onClick={sendData}
+                    className="z-20 bg-black text-white"
+                    variant="default"
+                    color="black"
                 >
                     Calculate
                 </Button>
-
-            </div> 
+            </div>
             <canvas
-                ref = {canvasRef} //Purpose: Connects the canvasRef created earlier to this <canvas> element.
-                id = 'canvas'
-                className='absolute top-0 left-0 w-full h-full'
+                ref={canvasRef}
+                id="canvas"
+                className="absolute top-0 left-0 w-full h-full"
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseOut={stopDrawing}
                 onMouseUp={stopDrawing}
-                
-            /> 
+            />
+            {latexExpression &&
+                latexExpression.map((latex, index) => (
+                    <div
+                        key={index}
+                        ref={dragRef}
+                        className="absolute p-2 text-white rounded shadow-md"
+                        style={{
+                            left: `${latexPosition.x}px`,
+                            top: `${latexPosition.y}px`,
+                            cursor: 'move',
+                        }}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                    >
+                        <div className="latex-content">{latex}</div>
+                    </div>
+                ))}
         </>
 
     );
-    
-      
 
 }
 
