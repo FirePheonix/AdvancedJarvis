@@ -88,6 +88,12 @@ export default function Home() {
                 window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub])
             }, 0);
         }
+
+        if(latexExpression.length>0){
+            setTimeout(() => {
+
+            },0)
+        }
     },[latexExpression])
 
     useEffect(() => {
@@ -98,7 +104,8 @@ export default function Home() {
 
     const renderLatexToCanvas = (expression: string, answer: string) => {
         //takes our latex and converts it into a large expression
-        const latex = `\\(\\LARGE{${expression} = ${answer}}\\)`;
+        const latex = `{${expression} = ${answer}}`;
+
 
         //we'll use our spread operator here to process any assigned operator like x=17 , y = 8, etc. and save it in our setLatexExpression to the new value we just created/
         setLatexExpression([...latexExpression, latex]);
@@ -168,9 +175,9 @@ export default function Home() {
                     setTimeout(() => {
                         setResult({
                             expression: data.expr,
-                            answer: data.results
+                            answer: resp.data[0].result
                         });
-                    }, 1000);
+                    }, 0);
                 });
     
             } catch (error) {
@@ -210,7 +217,7 @@ export default function Home() {
         }
 
         const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.min.js';
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js';
         script.async = true;
         document.head.appendChild(script);
 
