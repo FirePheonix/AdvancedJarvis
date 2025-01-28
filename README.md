@@ -22,6 +22,7 @@ Allows users to perform calculations by scribbling mathematical expressions.
 ### Frontend
 React
 Vite
+Typescript
 ShadCN UI
 
 ### Backend
@@ -31,6 +32,7 @@ FastAPI
 OpenCV
 PyAudio
 MediaPipe by Google
+Typescript
 
 ### APIs
 Gemini
@@ -40,7 +42,7 @@ OpenAPI
 
 Clone the repository:
 
-git clone https://github.com/your-repo-name.git
+git clone (https://github.com/FirePheonix/AdvancedJarvis)
 
 Navigate to the project directory:
 
