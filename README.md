@@ -1,7 +1,7 @@
-# Semi-Automatic, AI-Enhanced, Voice-Controlled, Computer Vision-Powered Web Browser
+# Semi-Automatic, AI-Enhanced, Voice-Controlled, Computer Vision-Powered Web Application
 ## Overview
 
-This project aims to build an innovative web browser application that integrates advanced technologies like computer vision, AI enhancements, and voice control. It offers a semi-automatic experience, featuring components such as a computer vision-powered mathematics interpreter, a voice-commanded assistant (Jarvis), and a scribble calculator.
+This project aims to build an innovative web browser application that integrates advanced technologies like computer vision, AI enhancements, and voice control. It offers a semi-automatic experience, featuring components such as a computer vision-powered mathematics interpreter, a voice-commanded assistant (Jarvis), and a scribble calculator. Handles 
 
 ## Features
 
@@ -12,6 +12,7 @@ Interprets handwritten mathematical expressions using computer vision.
 ### Voice-Commanded Jarvis
 Status: Completed
 A voice-controlled assistant to execute browser commands seamlessly.
+Handles navigation to other websites on voice command.
 
 ### Scribble Calculator
 Status: Completed
